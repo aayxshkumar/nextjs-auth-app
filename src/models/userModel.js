@@ -1,7 +1,4 @@
 import mongoose from "mongoose";
-import { unique } from "next/dist/build/utils";
-import { type } from "os";
-import { PassThrough } from "stream";
 
 const userSchema = new mongoose.Schema({
     username: {
