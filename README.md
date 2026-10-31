@@ -1,38 +1,65 @@
+# nextjs-auth-app
+
+![CI](https://github.com/aayxshkumar/nextjs-auth-app/actions/workflows/ci.yml/badge.svg)
+
 > Learning project from January 2024.
 
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+An email and password auth flow built with Next.js route handlers, MongoDB and JWT cookies.
 
-## Getting Started
+## What it does
 
-First, run the development server:
+- Sign up (`/signup`): hashes the password with bcryptjs, saves the user with Mongoose and sends a verification email through Mailtrap's sandbox SMTP server.
+- Verify email (`/verifyemail?token=...`): marks the user as verified if the token matches and has not expired (1 hour).
+- Log in (`/login`): checks the password and sets a signed JWT (valid for 1 hour) in an httpOnly `token` cookie.
+- Profile (`/profile`): reads the current user from `/api/users/me` and can log out, which clears the cookie.
+- `src/middleware.ts` redirects signed-out visitors away from `/` and `/profile`, and signed-in visitors away from `/login`, `/signup` and `/verifyemail`.
+
+## Known issues
+
+This was written while learning, and some parts do not work as intended. Visible in the code:
+
+- The user schema has no `email` field, but signup and login look users up by `email`.
+- The signup route does not `await` `newUser.save()`, and the login route never calls `connect()`.
+- `src/models/userModel.js` checks `mongoose.model.users` instead of `mongoose.models.users`.
+- The home page (`/`) is still the create-next-app starter page.
+
+## Tech stack
+
+- Next.js 15 (App Router), React 18, TypeScript
+- Tailwind CSS
+- MongoDB with Mongoose
+- bcryptjs, jsonwebtoken, Nodemailer, axios, react-hot-toast
+
+## Getting started
+
+Requires Node.js 22 (the version used in CI) and a MongoDB instance.
 
 ```bash
+git clone https://github.com/aayxshkumar/nextjs-auth-app.git
+cd nextjs-auth-app
+npm ci
+cp .env.example .env.local   # then fill in your values
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Other scripts:
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+```bash
+npm run lint
+npm run build
+npm start
+```
 
-## Learn More
+### Environment variables
 
-To learn more about Next.js, take a look at the following resources:
+| Name | Used for |
+| --- | --- |
+| `MONGO_URL` | MongoDB connection string |
+| `TOKEN_SECRET` | Secret used to sign and verify the JWT |
+| `DOMAIN` | Base URL used in verification email links |
+| `MAILTRAP_USER` | Mailtrap sandbox SMTP username |
+| `MAILTRAP_PASS` | Mailtrap sandbox SMTP password |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+`npm run build` does not need a database. CI builds with placeholder values; see `.github/workflows/ci.yml`.
